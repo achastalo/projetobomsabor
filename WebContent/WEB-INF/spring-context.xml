@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc	
+								http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+								http://www.springframework.org/schema/beans
+								http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+								http://www.springframework.org/schema/context	
+								http://www.springframework.org/schema/context/spring-context-4.0.xsd
+								http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<context:component-scan
+		base-package="br.com.bomsabor" />
+	<mvc:annotation-driven />
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/view/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+	<!-- O controlador do Spring MVC, ou seja o servlet no web.xml , foi configurado 
+		para receber todas as requisições incluindo essas que foram enviadas para 
+		receber o conteúdo de arquivos comuns como imagens, css ou scripts. Queremos 
+		que o controlador não atenda essas requisições que não são para ações. Para 
+		isso é preciso adicionar no arquivo spring-context.xml um mapeamento que 
+		informa ao Spring MVC que ele deve ignorar todo acesso a conteúdo estático. -->
+	<mvc:default-servlet-handler />
+
+	<!-- registrar o nosso novo interceptador -->
+	<mvc:interceptors>
+		<bean class="br.com.bomsabor.interceptor.AutorizadorInterceptor" />
+	</mvc:interceptors>
+
+	<!-- Definimos um bean no XML. Um bean é apenas um sinônimo para componente. 
+		Ao final, cada bean se torna um objeto administrado pelo Spring. Para o Spring 
+		Container, a mysqlDataSource , o JdbcTarefaDao e TarefasController são todos 
+		componentes(ou beans) que foram ligados/amarrados. Ou seja, um depende ao 
+		outro. O Spring vai criar todos e administrar o ciclo da vida deles. -->
+	<bean id="postgreDataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName"
+			value="org.postgresql.Driver" />
+		<property name="url"
+			value="jdbc:postgresql://localhost/estudo" />
+		<property name="username" value="postgres" />
+		<property name="password" value="server" />
+	</bean>
+
+	<!-- gerenciamento de jpa pelo spring -->
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="postgreDataSource" />
+		<property name="jpaVendorAdapter">
+			<bean
+				class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+		</property>
+	</bean>
+
+	<!-- gerenciamento da transação pelo spring -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory"
+			ref="entityManagerFactory" />
+	</bean>
+
+	<!-- Essa tag avisa que o controle de transações será feito via anotação, parecido 
+		com a forma de habilitar o uso de anotações para o Spring MVC. -->
+	<tx:annotation-driven />
+</beans>
